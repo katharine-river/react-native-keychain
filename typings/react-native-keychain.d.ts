@@ -81,6 +81,7 @@ declare module 'react-native-keychain' {
     securityLevel?: SECURITY_LEVEL;
     storage?: STORAGE_TYPE;
     rules?: SECURITY_RULES;
+    key?: string
   }
 
   function setGenericPassword(
@@ -90,6 +91,10 @@ declare module 'react-native-keychain' {
   ): Promise<false | Result>;
 
   function getGenericPassword(
+    options?: Options
+  ): Promise<false | UserCredentials>;
+
+  function getGenericPasswordWithKey(
     options?: Options
   ): Promise<false | UserCredentials>;
 

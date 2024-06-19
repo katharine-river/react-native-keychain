@@ -90,6 +90,7 @@ type BaseOptions = {|
   securityLevel?: SecMinimumLevel,
   storage?: SecStorageType,
   rules?: SecSecurityRules,
+  key?: string
 |};
 
 type NormalizedOptions = {
@@ -199,6 +200,21 @@ export function getGenericPassword(
   const options = normalizeOptions(serviceOrOptions);
   return RNKeychainManager.getGenericPasswordForOptions(options);
 }
+
+/**
+ * NEW METHOD ADDED TO RETRIEVE BASED ON KEY
+ * iOS only
+ * Fetches login combination for `key`.
+ * @param {object} options A keychain options object.
+ * @return {Promise} Resolves to `{ service, username, password, storage }` when successful
+ */
+export function getGenericPasswordWithKey(
+  serviceOrOptions?: string | Options
+): Promise<false | UserCredentials> {
+  const options = normalizeOptions(serviceOrOptions);
+  return RNKeychainManager.getGenericPasswordForOptionsWithKey(options);
+}
+
 
 /**
  * Deletes all generic password keychain entries for `service`.

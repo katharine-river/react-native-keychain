@@ -420,6 +420,62 @@ RCT_EXPORT_METHOD(getGenericPasswordForOptions:(NSDictionary * __nullable)option
   return resolve([result copy]);
 }
 
+//NEW METHOD ADDED TO RETRIEVE BASED ON KEY
+RCT_EXPORT_METHOD(getGenericPasswordForOptionsWithKey:(NSDictionary * __nullable)options
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSString *service = serviceValue(options);
+  NSString *authenticationPrompt = authenticationPromptValue(options);
+
+  NSString *key = @"";
+  if (options && options[@"key"] != nil) {
+    key=options[@"key"];
+  }
+
+  NSDictionary *query = @{
+    (__bridge NSString *)kSecClass: (__bridge id)(kSecClassGenericPassword),
+    (__bridge NSString *)kSecAttrAccount: key,
+    (__bridge NSString *)kSecReturnAttributes: (__bridge id)kCFBooleanTrue,
+    (__bridge NSString *)kSecReturnData: (__bridge id)kCFBooleanTrue,
+    (__bridge NSString *)kSecMatchLimit: (__bridge NSString *)kSecMatchLimitOne,
+    (__bridge NSString *)kSecUseOperationPrompt: authenticationPrompt
+  };
+
+  // Look up service in the keychain
+  NSDictionary *found = nil;
+  CFTypeRef foundTypeRef = NULL;
+  OSStatus osStatus = SecItemCopyMatching((__bridge CFDictionaryRef) query, (CFTypeRef*)&foundTypeRef);
+
+  if (osStatus != noErr && osStatus != errSecItemNotFound) {
+    NSError *error = [NSError errorWithDomain:NSOSStatusErrorDomain code:osStatus userInfo:nil];
+    return rejectWithError(reject, error);
+  }
+
+  found = (__bridge NSDictionary*)(foundTypeRef);
+  if (!found) {
+    return resolve(@(NO));
+  }
+
+  // Found
+  NSString *username = (NSString *) [found objectForKey:(__bridge id)(kSecAttrAccount)];
+  NSString *password = [[NSString alloc] initWithData:[found objectForKey:(__bridge id)(kSecValueData)] encoding:NSUTF8StringEncoding];
+
+  CFRelease(foundTypeRef);
+  NSMutableDictionary* result = [@{@"storage": @"keychain"} mutableCopy];
+  if (service) {
+      result[@"service"] = service;
+  }
+  if (username) {
+      result[@"username"] = username;
+  }
+  if (password) {
+      result[@"password"] = password;
+  }
+  return resolve([result copy]);
+}
+
+
 RCT_EXPORT_METHOD(resetGenericPasswordForOptions:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
